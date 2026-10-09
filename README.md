@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Neend — bedding store + admin
 
-## Getting Started
+Next.js storefront with a built-in admin panel. Data is kept in a JSON file (`data/db.json`), created on first run.
 
-First, run the development server:
+## Run
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run build
+npm run start      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run dev` works too, but is much slower because pages compile on first visit.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Admin
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Open `/admin` and sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env.local` (see `.env.example`).
+  The admin account is created the first time the database is set up — change the password in `.env.local` **before** first run.
+- **Products** — add, edit, hide/show, delete, set stock, upload photos (JPG/PNG/WebP/AVIF, up to 8 MB) or paste Unsplash links,
+  and link pillow covers to the set they match.
+- **Orders** — filter by status, search, change status (cancelling returns stock), add internal notes.
+- **Customers** — registered customers with order count and total spent; give or remove admin access.
 
-## Learn More
+## Data
 
-To learn more about Next.js, take a look at the following resources:
+| Path | What |
+| --- | --- |
+| `data/db.json` | products, customers (passwords hashed with scrypt), orders, sessions |
+| `data/uploads/` | photos uploaded from the admin |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Delete the `data/` folder to start again from the original catalogue.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This file database suits a single server. For hosting on serverless platforms (e.g. Vercel) or several servers,
+move `lib/db.ts` to a real database (Postgres, MySQL) and uploads to object storage (S3, Cloudinary).

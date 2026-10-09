@@ -23,11 +23,34 @@
   --font-sans: var(--font-inter);
 }
 
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+}
+
+/* Eliminate 300ms mobile tap delay and tap highlights */
+a, button, input, select, textarea {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Utility to hide native scrollbar on horizontal strips */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
 ::selection {
@@ -35,49 +58,64 @@ body {
   color: var(--paper);
 }
 
-.label {
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
+/* In the components layer so Tailwind utilities (w-auto, py-2, …) can override these. */
+@layer components {
+  .label {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
 
-.field {
-  width: 100%;
-  border: 1px solid var(--line);
-  background: var(--paper);
-  padding: 0.85rem 1rem;
-  font-size: 14px;
-  outline: none;
-}
-.field:focus {
-  border-color: var(--ink);
-}
+  .field {
+    width: 100%;
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 0.85rem 1rem;
+    font-size: 16px; /* Prevents auto-zoom on mobile iOS Safari */
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  @media (min-width: 640px) {
+    .field {
+      font-size: 14px;
+    }
+  }
+  .field:focus {
+    border-color: var(--ink);
+  }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  background: var(--ink);
-  color: var(--paper);
-  padding: 1rem 1.75rem;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.btn:hover {
-  opacity: 0.85;
-}
-.btn:disabled {
-  opacity: 0.4;
-}
-.btn-outline {
-  background: transparent;
-  color: var(--ink);
-  border: 1px solid var(--ink);
-}
-.btn-outline:hover {
-  background: var(--ink);
-  color: var(--paper);
-  opacity: 1;
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.95rem 1.75rem;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    min-height: 44px; /* Standard mobile touch target */
+    transition: opacity 0.15s ease, transform 0.1s ease;
+  }
+  .btn:hover {
+    opacity: 0.85;
+  }
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .btn-outline {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+  }
+  .btn-outline:hover {
+    background: var(--ink);
+    color: var(--paper);
+    opacity: 1;
+  }
 }

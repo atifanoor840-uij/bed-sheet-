@@ -2,19 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { useAccount } from "./account-store";
+import { useActionState } from "react";
+import { trackOrder } from "@/app/actions";
 import { Field } from "./ui";
 import { formatPrice, photos } from "@/lib/products";
 
-const steps = ["Confirmed", "Packed", "Shipped", "Delivered"] as const;
+const steps = ["Confirmed", "Packed", "Shipped", "Delivered"];
 
-export default function TrackOrder({ initialId }: { initialId: string }) {
-  const { orders } = useAccount();
-  const [query, setQuery] = useState(initialId);
-  const [searched, setSearched] = useState(initialId);
-
-  const order = searched ? orders.find((o) => o.id.toLowerCase() === searched.trim().replace(/^#/, "").toLowerCase()) : undefined;
+export default function TrackOrder({ initialId, initialPhone }: { initialId: string; initialPhone: string }) {
+  const [state, action, pending] = useActionState(trackOrder, undefined);
+  const order = state?.order;
   const current = order ? steps.indexOf(order.status) : -1;
 
   return (
@@ -22,26 +19,23 @@ export default function TrackOrder({ initialId }: { initialId: string }) {
       <div>
         <p className="label mb-4 text-muted">Help</p>
         <h1 className="text-4xl font-light tracking-[-0.02em] md:text-5xl">Track your order</h1>
-        <p className="mt-4 text-[14px] text-muted">Enter the order number from your confirmation message.</p>
+        <p className="mt-4 text-[14px] text-muted">Enter the order number from your confirmation and the phone number used at checkout.</p>
 
-        <form
-          className="mt-8 flex items-end gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setSearched(query);
-          }}
-        >
-          <div className="flex-1">
-            <Field label="Order number">
-              <input value={query} onChange={(e) => setQuery(e.target.value)} required placeholder="e.g. NE123456" className="field" />
-            </Field>
-          </div>
-          <button className="btn">Track</button>
+        <form action={action} className="mt-8 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <Field label="Order number">
+            <input name="id" defaultValue={initialId} required placeholder="e.g. NE123456" className="field" />
+          </Field>
+          <Field label="Phone">
+            <input name="phone" type="tel" defaultValue={initialPhone} required placeholder="03xx xxxxxxx" className="field" />
+          </Field>
+          <button disabled={pending} className="btn">
+            {pending ? "…" : "Track"}
+          </button>
         </form>
 
-        {searched && !order && (
+        {state?.error && (
           <p className="mt-8 border border-line p-6 text-[14px] text-muted">
-            We couldn&rsquo;t find order &ldquo;{searched}&rdquo; on this device. Check the number, or{" "}
+            {state.error} Check the details, or{" "}
             <Link href="/contact" className="text-ink underline underline-offset-4">
               contact us
             </Link>
@@ -55,16 +49,20 @@ export default function TrackOrder({ initialId }: { initialId: string }) {
               <p className="font-medium">#{order.id}</p>
               <p className="text-muted">{formatPrice(order.total)}</p>
             </div>
-            <ol className="mt-8 grid grid-cols-4">
-              {steps.map((s, i) => (
-                <li key={s} className="text-[12px]">
-                  <div className={`h-1 ${i <= current ? "bg-ink" : "bg-line"}`} />
-                  <p className={`mt-3 ${i <= current ? "text-ink" : "text-muted"}`}>{s}</p>
-                </li>
-              ))}
-            </ol>
+            {order.status === "Cancelled" ? (
+              <p className="mt-6 text-[14px] text-sale">This order was cancelled.</p>
+            ) : (
+              <ol className="mt-8 grid grid-cols-4">
+                {steps.map((s, i) => (
+                  <li key={s} className="text-[12px]">
+                    <div className={`h-1 ${i <= current ? "bg-ink" : "bg-line"}`} />
+                    <p className={`mt-3 ${i <= current ? "text-ink" : "text-muted"}`}>{s}</p>
+                  </li>
+                ))}
+              </ol>
+            )}
             <p className="mt-8 text-[14px] text-muted">
-              Delivering to {order.address.name}, {order.address.line}, {order.address.city}. Expected in 2–4 working days.
+              Delivering to {order.name}, {order.line}, {order.city}.
             </p>
           </div>
         )}

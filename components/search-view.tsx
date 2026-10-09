@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { Search } from "lucide-react";
 import ProductCard from "./product-card";
-import { categories, products } from "@/lib/products";
+import { categories, type Product } from "@/lib/products";
 
-export default function SearchView({ initialQuery }: { initialQuery: string }) {
+export default function SearchView({ products, initialQuery }: { products: Product[]; initialQuery: string }) {
   const [q, setQ] = useState(initialQuery);
   const term = q.trim().toLowerCase();
   const results = term ? products.filter((p) => [p.name, p.category, p.colour].some((f) => f.toLowerCase().includes(term))) : [];

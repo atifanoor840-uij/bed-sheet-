@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { FREE_SHIPPING, SHIPPING_FEE, useCart } from "./cart";
-import { useAccount, type Order } from "./account-store";
+import { useCatalog } from "./catalog";
 import { Field } from "./ui";
-import { formatPrice, getProduct, photos, PROMO } from "@/lib/products";
+import { placeOrder } from "@/app/actions";
+import { formatPrice, photos, PROMO } from "@/lib/products";
 
 const cities = ["Lahore", "Karachi", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala", "Hyderabad", "Other"];
 const payments = [
@@ -15,11 +16,20 @@ const payments = [
   { id: "wallet", label: "JazzCash / Easypaisa", note: "We'll send a payment request to your phone number." },
 ];
 
-export default function CheckoutForm({ promo }: { promo: boolean }) {
+type CheckoutUser = { name: string; email: string; phone?: string } | null;
+
+export default function CheckoutForm({ promo, user }: { promo?: string; user: CheckoutUser }) {
   const { lines, subtotal, clear } = useCart();
-  const { user, placeOrder } = useAccount();
+  const { get: getProduct } = useCatalog();
   const [payment, setPayment] = useState("cod");
-  const [placed, setPlaced] = useState<Order | null>(null);
+  const [state, action, pending] = useActionState(placeOrder, undefined);
+  const placed = state?.order;
+
+  useEffect(() => {
+    if (!placed) return;
+    clear();
+    window.scrollTo(0, 0);
+  }, [placed, clear]);
 
   const discount = promo ? Math.round(subtotal * PROMO.rate) : 0;
   const shipping = subtotal >= FREE_SHIPPING ? 0 : SHIPPING_FEE;
@@ -30,9 +40,9 @@ export default function CheckoutForm({ promo }: { promo: boolean }) {
       <div className="mx-auto grid max-w-[1440px] gap-12 px-5 py-14 md:px-10 lg:grid-cols-2 lg:gap-20 lg:py-20">
         <div className="self-center">
           <p className="label mb-4 text-muted">Order #{placed.id}</p>
-          <h1 className="text-4xl font-light tracking-[-0.02em] md:text-5xl">Thank you, {placed.address.name.split(" ")[0]}.</h1>
+          <h1 className="text-4xl font-light tracking-[-0.02em] md:text-5xl">Thank you, {placed.name.split(" ")[0]}.</h1>
           <p className="mt-6 max-w-md text-[15px] text-muted">
-            Your order is confirmed. We&rsquo;ll call {placed.address.phone} to confirm delivery, usually within a few hours.
+            Your order is confirmed. We&rsquo;ll call {placed.phone} to confirm delivery, usually within a few hours.
           </p>
           <dl className="mt-10 space-y-3 border-t border-line pt-6 text-[14px]">
             <div className="flex justify-between">
@@ -46,12 +56,12 @@ export default function CheckoutForm({ promo }: { promo: boolean }) {
             <div className="flex justify-between">
               <dt className="text-muted">Deliver to</dt>
               <dd className="text-right">
-                {placed.address.line}, {placed.address.city}
+                {placed.line}, {placed.city}
               </dd>
             </div>
           </dl>
           <div className="mt-10 flex flex-wrap gap-2">
-            <Link href={`/track-order?id=${placed.id}`} className="btn">
+            <Link href={`/track-order?id=${placed.id}&phone=${encodeURIComponent(placed.phone)}`} className="btn">
               Track order
             </Link>
             <Link href="/shop" className="btn btn-outline">
@@ -79,27 +89,9 @@ export default function CheckoutForm({ promo }: { promo: boolean }) {
   }
 
   return (
-    <form
-      className="mx-auto grid max-w-[1440px] gap-12 px-5 py-14 md:px-10 lg:grid-cols-[1.4fr_1fr] lg:gap-20"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const f = new FormData(e.currentTarget);
-        const order = placeOrder({
-          items: lines,
-          total,
-          payment: payments.find((p) => p.id === payment)!.label,
-          address: {
-            name: String(f.get("name")),
-            phone: String(f.get("phone")),
-            line: String(f.get("address")),
-            city: String(f.get("city")),
-          },
-        });
-        clear();
-        setPlaced(order);
-        window.scrollTo(0, 0);
-      }}
-    >
+    <form action={action} className="mx-auto grid max-w-[1440px] gap-12 px-5 py-14 md:px-10 lg:grid-cols-[1.4fr_1fr] lg:gap-20">
+      <input type="hidden" name="cart" value={JSON.stringify(lines)} />
+      {promo && <input type="hidden" name="promo" value={promo} />}
       <div>
         <h1 className="text-4xl font-light tracking-[-0.02em]">Checkout</h1>
         {!user && (
@@ -148,7 +140,7 @@ export default function CheckoutForm({ promo }: { promo: boolean }) {
         <div className="border-t border-line">
           {payments.map((p) => (
             <label key={p.id} className="flex cursor-pointer gap-4 border-b border-line py-4">
-              <input type="radio" name="payment" checked={payment === p.id} onChange={() => setPayment(p.id)} className="mt-1 accent-[var(--ink)]" />
+              <input type="radio" name="payment" value={p.id} checked={payment === p.id} onChange={() => setPayment(p.id)} className="mt-1 accent-[var(--ink)]" />
               <span>
                 <span className="block text-[14px]">{p.label}</span>
                 <span className="text-[13px] text-muted">{p.note}</span>
@@ -157,7 +149,10 @@ export default function CheckoutForm({ promo }: { promo: boolean }) {
           ))}
         </div>
 
-        <button className="btn mt-10 w-full sm:w-auto">Place order — {formatPrice(total)}</button>
+        {state?.error && <p className="mt-8 border border-sale p-4 text-[14px] text-sale">{state.error}</p>}
+        <button disabled={pending} className="btn mt-10 w-full sm:w-auto">
+          {pending ? "Placing order…" : `Place order — ${formatPrice(total)}`}
+        </button>
       </div>
 
       <aside className="self-start bg-sand p-6 md:p-8 lg:sticky lg:top-24">

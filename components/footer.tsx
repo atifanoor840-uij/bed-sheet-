@@ -43,23 +43,23 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-sand-deep bg-sand">
-      <div className="mx-auto grid max-w-[1440px] gap-12 px-5 py-16 md:px-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div className="max-w-sm">
+      <div className="mx-auto grid max-w-[1440px] gap-10 px-4 py-12 sm:px-6 sm:grid-cols-2 md:px-10 md:py-16 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="sm:col-span-2 lg:col-span-1 max-w-sm">
           <p className="text-lg font-medium tracking-[0.42em]">NEEND</p>
-          <p className="mt-6 text-[13px] font-medium">Newsletter</p>
-          <p className="mt-1 text-[13px] text-muted">New collections and early sale access.</p>
+          <p className="mt-5 text-[13px] font-medium">Newsletter</p>
+          <p className="mt-1 text-[13px] text-muted">New collections and early release access.</p>
           {done ? (
-            <p className="mt-5 border-b border-ink py-3 text-[13px]">Thank you — you&rsquo;re on the list.</p>
+            <p className="mt-4 border-b border-ink py-2.5 text-[13px]">Thank you — you&rsquo;re on the list.</p>
           ) : (
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 setDone(true);
               }}
-              className="mt-5 flex border-b border-ink"
+              className="mt-4 flex border-b border-ink"
             >
-              <input required type="email" placeholder="Email address" className="min-w-0 flex-1 bg-transparent py-3 text-[13px] outline-none placeholder:text-muted" />
-              <button aria-label="Subscribe" className="px-1">
+              <input required type="email" placeholder="Email address" className="min-w-0 flex-1 bg-transparent py-2.5 text-base sm:text-[13px] outline-none placeholder:text-muted" />
+              <button aria-label="Subscribe" className="p-2 -mr-1 hover:opacity-70 transition-opacity">
                 <ArrowRight size={16} strokeWidth={1.5} />
               </button>
             </form>
@@ -67,11 +67,11 @@ export default function Footer() {
         </div>
         {cols.map((c) => (
           <div key={c.title}>
-            <p className="mb-4 text-[13px] font-medium">{c.title}</p>
-            <ul className="space-y-2.5 text-[13px] text-muted">
+            <p className="mb-3 text-[13px] font-medium sm:mb-4">{c.title}</p>
+            <ul className="space-y-2 text-[13px] text-muted sm:space-y-2.5">
               {c.links.map(([label, href]) => (
                 <li key={label}>
-                  <Link href={href} className="hover:text-ink">
+                  <Link href={href} className="hover:text-ink transition-colors">
                     {label}
                   </Link>
                 </li>
@@ -82,7 +82,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-sand-deep">
-        <div className="mx-auto flex max-w-[1440px] flex-col justify-between gap-2 px-5 py-5 text-xs text-muted sm:flex-row md:px-10">
+        <div className="mx-auto flex max-w-[1440px] flex-col justify-between gap-2.5 px-4 py-5 text-xs text-muted sm:px-6 sm:flex-row md:px-10">
           <p>© 2026 Neend Home, Lahore</p>
           <p>Cash on delivery · Visa · Mastercard · JazzCash · Easypaisa</p>
         </div>

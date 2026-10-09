@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { useCart } from "./cart";
 import { Accordion } from "./ui";
-import { defaultSize, discount, formatPrice, getMatches, sizesFor, type Product } from "@/lib/products";
+import { defaultSize, discount, formatPrice, sizesFor, type Product } from "@/lib/products";
 
 const details = [
   { q: "Fabric & care", a: "100% cotton percale, 300 thread count. Machine wash cold on a gentle cycle, tumble dry low. Do not bleach." },
@@ -27,26 +27,25 @@ const details = [
   },
 ];
 
-export default function ProductDetail({ product }: { product: Product }) {
+export default function ProductDetail({ product, matches }: { product: Product; matches: Product[] }) {
   const { add } = useCart();
   const sizes = sizesFor(product);
   const [size, setSize] = useState<string>(defaultSize(product));
   const [qty, setQty] = useState(1);
-  const matches = getMatches(product);
 
   return (
-    <div className="mx-auto grid max-w-[1440px] gap-10 pb-20 md:px-10 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
-      <div className="grid grid-cols-2 gap-1 md:gap-3 lg:pt-10">
+    <div className="mx-auto grid max-w-[1440px] gap-8 pb-16 px-4 sm:px-6 md:px-10 md:pb-20 lg:grid-cols-[1.3fr_1fr] lg:gap-16">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 lg:pt-10">
         {product.images.map((src, i) => (
-          // An odd photo count leaves the last one spanning both columns.
-          <div key={src} className={`relative bg-stone ${i === product.images.length - 1 && product.images.length % 2 ? "col-span-2 aspect-[3/2]" : "aspect-[3/4]"}`}>
-            <Image src={src} alt={`${product.name} ${i + 1}`} fill priority={i === 0} sizes="(min-width:1024px) 30vw, 50vw" className="object-cover" />
+          // An odd photo count leaves the last one spanning both columns on desktop.
+          <div key={src} className={`relative bg-stone ${i === 0 ? "aspect-[4/5] sm:aspect-[3/4]" : i === product.images.length - 1 && product.images.length % 2 ? "sm:col-span-2 aspect-[4/3] sm:aspect-[3/2]" : "aspect-[4/5] sm:aspect-[3/4]"}`}>
+            <Image src={src} alt={`${product.name} ${i + 1}`} fill priority={i === 0} sizes="(min-width:1024px) 35vw, (min-width:640px) 50vw, 100vw" className="object-cover" />
           </div>
         ))}
       </div>
 
-      <div className="px-5 md:px-0 lg:sticky lg:top-24 lg:self-start lg:pt-10">
-        <nav className="mb-8 text-xs text-muted">
+      <div className="px-1 sm:px-0 lg:sticky lg:top-24 lg:self-start lg:pt-10">
+        <nav className="mb-6 text-xs text-muted">
           <Link href="/shop" className="hover:text-ink">
             Shop
           </Link>{" "}
@@ -56,7 +55,7 @@ export default function ProductDetail({ product }: { product: Product }) {
           </Link>
         </nav>
 
-        <h1 className="text-4xl font-light tracking-[-0.02em] md:text-5xl">{product.name}</h1>
+        <h1 className="text-3xl font-light tracking-[-0.02em] sm:text-4xl md:text-5xl">{product.name}</h1>
         <p className="mt-2 text-[13px] text-muted">
           {product.category} · {product.colour}
         </p>
@@ -89,23 +88,26 @@ export default function ProductDetail({ product }: { product: Product }) {
           </div>
         </div>
 
-        <div className="mt-4 flex gap-2">
+        <div className="mt-5 flex gap-2">
           <div className="flex items-center border border-line">
-            <button className="px-4 py-4" aria-label="Decrease" onClick={() => setQty((q) => Math.max(1, q - 1))}>
+            <button className="px-3.5 py-3 sm:px-4 sm:py-4" aria-label="Decrease" onClick={() => setQty((q) => Math.max(1, q - 1))}>
               <Minus size={13} />
             </button>
             <span className="w-6 text-center text-[13px]">{qty}</span>
-            <button className="px-4 py-4" aria-label="Increase" onClick={() => setQty((q) => q + 1)}>
+            <button className="px-3.5 py-3 sm:px-4 sm:py-4" aria-label="Increase" onClick={() => setQty((q) => q + 1)}>
               <Plus size={13} />
             </button>
           </div>
-          <button onClick={() => add(product.slug, size, qty)} className="btn flex-1">
-            Add to cart — {formatPrice(product.price * qty)}
+          <button disabled={product.stock <= 0} onClick={() => add(product.slug, size, Math.min(qty, product.stock))} className="btn flex-1 py-3.5 sm:py-4 text-[11px] tracking-widest">
+            {product.stock > 0 ? `Add to cart — ${formatPrice(product.price * qty)}` : "Sold out"}
           </button>
         </div>
-        <Link href="/checkout" onClick={() => add(product.slug, size, qty, false)} className="btn btn-outline mt-2 w-full">
-          Buy it now
-        </Link>
+        {product.stock > 0 && (
+          <Link href="/checkout" onClick={() => add(product.slug, size, Math.min(qty, product.stock), false)} className="btn btn-outline mt-2.5 w-full py-3.5 sm:py-4">
+            Buy it now
+          </Link>
+        )}
+        {product.stock > 0 && product.stock <= 5 && <p className="mt-3 text-[13px] text-sale">Only {product.stock} left</p>}
 
         {matches.length > 0 && (
           <div className="mt-8 border-t border-line pt-6">
